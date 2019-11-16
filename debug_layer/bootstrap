@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+nohup /opt/bin/ngrok tcp -config=/opt/bin/ngrok.yaml 9229 &
+
+attempts=1
+max_attempts=10
+wait_secs=1
+tunnel=""
+
+# wait for background process to open ngrok tunnel
+while [ -z ${tunnel} ] && [ "${attempts}" -le "${max_attempts}" ]; do
+    tunnel=$(curl -s http://localhost:4040/api/tunnels | /opt/bin/jq -j ".tunnels[0].public_url")
+    echo "[$(date +"%T")] Waiting for ngrok tunnel..."
+    sleep ${wait_secs}
+    ((attempts++))
+done
+
+if [ -z ${tunnel} ]; then
+    echo "[$(date +"%T")] ERROR: Timed out waiting for ngrok tunnel"
+    exit 42
+fi
+
+echo "NGROK TUNNEL: ${tunnel}"
+NGROK_TUNNEL=${tunnel}
+export NGROK_TUNNEL
+
+/opt/bin/node --inspect-brk /opt/bootstrap.js

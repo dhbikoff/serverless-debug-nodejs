@@ -1,0 +1,18 @@
+service: serverless-debug-nodejs-poc
+
+provider:
+  name: aws
+  runtime: provided
+  stage: dev
+  region: us-east-1
+
+layers:
+  nodeDebug:
+    path: ./debug_layer
+
+functions:
+  runTest:
+    handler: ./src/handler.runTest
+    timeout: 900
+    layers:
+      - { Ref: NodeDebugLambdaLayer }
